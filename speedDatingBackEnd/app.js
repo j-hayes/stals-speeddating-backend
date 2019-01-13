@@ -12,6 +12,8 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authenticationRouter = require('./routes/authentication');
 var eventsRouter = require('./routes/event');
+var matchesRouter = require('./routes/match');
+
 
 var app = express();
 
@@ -30,6 +32,13 @@ app.use(function (req, res, next) {
     next();
     return
   } else {
+
+  if(!req.headers['authorization']){
+    res.status(401);
+    res.send();
+    return;
+  }
+
   const authHeader = req.headers['authorization'];
   const tokenstrings = authHeader.split(' ');
   const token = tokenstrings[1];
@@ -99,6 +108,7 @@ app.use('/', indexRouter);
 app.use('/user', usersRouter);
 app.use('/authentication', authenticationRouter);
 app.use('/event', eventsRouter);
+app.use('/match', matchesRouter);
 
 
 // catch 404 and forward to error handler
