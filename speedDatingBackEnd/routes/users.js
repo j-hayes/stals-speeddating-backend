@@ -81,7 +81,10 @@ router.post('/', function (req, res, next) {
         "S": req.body.lastName
       },
       "sex": {
-        "S": req.body.sex
+        "S": 'male'//req.body.sex
+      },
+      "email": {
+        "S": req.body.email//req.body.sex
       }
     }
   };
@@ -90,13 +93,14 @@ router.post('/', function (req, res, next) {
   
     
       var attributeList = [];
-      attributeList.push(new AmazonCognitoIdentity.CognitoUserAttribute({ Name: "email", Value: req.body.id }));
+      attributeList.push(new AmazonCognitoIdentity.CognitoUserAttribute({ Name: "email", Value: req.body.email }));
       userPool.signUp(req.body.id, req.body.password, attributeList, null, function (err, result) {
         if (err) {
           res.status(500);
           res.send({ "message": "Failed to create user" });
         }
-        else {
+        else {  
+          res.status(200);
           res.send({ "message": "Successfully Created User" });
         }
       });
