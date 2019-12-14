@@ -6,13 +6,19 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "amazon-cognito-identity-js": "^3.2.0",
+    "aws-sdk": "^2.590.0",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
     "http-errors": "~1.6.2",
     "jade": "~1.11.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.2",
     "koa": "^2.6.2",
     "morgan": "~1.9.0",
+    "node-fetch": "^2.6.0",
+    "request": "^2.88.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
