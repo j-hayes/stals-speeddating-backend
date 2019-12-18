@@ -51,7 +51,7 @@ router.get('/', function (req, res, next) {
     });
 });
 
-
+//todo this needs to be updated with the new matching formula. Will work with the "scheduler" algorithm and data model
 router.get('/:id/users', function (req, res, next) {
     var id = req.params.id;
 
@@ -248,7 +248,7 @@ router.put('/users', function (req, res, next) {
             ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
             var users = [];
             var usersList = [];
-            if (data.Items[0].users) {
+            if (data.Items[0].users) { // map the existing users
                 data.Items[0].users.forEach(user => {
                     if (!users[user]) {
                         users[user] = user;
@@ -257,7 +257,7 @@ router.put('/users', function (req, res, next) {
                 });;
             }
 
-            req.body.users.forEach(user => {
+            req.body.users.forEach(user => { // add the new users
                 if (!users[user]) {
                     users[user] = user;
                     usersList.push({ "S": user });
@@ -274,7 +274,7 @@ router.put('/users', function (req, res, next) {
                         "L": usersList
                     },
                     "open": {
-                        "BOOL": data.Items[0].open
+                        "BOOL": data.Items[0].open || false
                     }
                 }
             };
@@ -349,6 +349,9 @@ router.delete('/users', function (req, res, next) {
                     },
                     "users": {
                         "L": usersList
+                    },
+                    "open": {
+                        "BOOL": data.Items[0].open || false
                     }
                 }
             };
