@@ -6,7 +6,6 @@ AWS.config.update({ region: 'us-east-2' });
 const AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 const CognitoUserPool = AmazonCognitoIdentity.CognitoUserPool;
 global.fetch = require('node-fetch');
-const pool_region = 'us-east-1';
 const poolData = {
   UserPoolId: "us-east-2_rh2PJ37YP", // Your user pool id here    
   ClientId: "gnmg8qbg80vbpndrfd62ant6t" // Your client id here
@@ -16,6 +15,7 @@ const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
 const CognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider({});
 
 router.post('/login', function (req, res, next) {
+
   var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails({
     Username: req.body.username,
     Password: req.body.password
@@ -73,8 +73,8 @@ router.post('/', function (req, res, next) {
   // if(maxDateAge > 39){
   //   maxDateAge = 39;
   // }
-  
-  
+
+
   minDateAge = req.body.minDateAge;
   maxDateAge = req.body.maxDateAge;
 
@@ -100,10 +100,10 @@ router.post('/', function (req, res, next) {
         "S": req.body.email
       },
       "minDateAge": {
-        "N":  `${minDateAge}`
+        "N": `${minDateAge}`
       },
       "maxDateAge": {
-        "N":  `${maxDateAge}`
+        "N": `${maxDateAge}`
       }
     }
   };
@@ -116,7 +116,10 @@ router.post('/', function (req, res, next) {
       userPool.signUp(req.body.email, req.body.password, attributeList, null, function (err, result) {
         if (err) {
           res.status(500);
-          res.send({ "message": "Failed to create user" });
+          res.send({
+            "message": "Failed to create user in cognito",
+            "error" : err
+          });
         }
         else {
           res.status(200);
@@ -142,7 +145,10 @@ router.post('/', function (req, res, next) {
       });
     } else {
       res.status(500);
-      res.send({ "message": "Failed to create user" });
+      res.send({
+        "message": "Failed to create user in dynamo",
+        "error" : err
+      });
     }
   });
 });

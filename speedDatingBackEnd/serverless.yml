@@ -1,0 +1,13 @@
+service: stals-speeddating-backend
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: prod
+  region: us-east-2
+  memorySize: 128
+functions:
+  app:
+    handler: app.handler
+    events:
+        - http: ANY /
+        - http: 'ANY {proxy+}'

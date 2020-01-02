@@ -1,3 +1,5 @@
+const serverless = require('serverless-http');
+
 const request = require('request');
 const jwkToPem = require('jwk-to-pem');
 const jwt = require('jsonwebtoken');
@@ -13,6 +15,8 @@ var usersRouter = require('./routes/users');
 var authenticationRouter = require('./routes/authentication');
 var eventsRouter = require('./routes/event');
 var matchesRouter = require('./routes/match');
+var dateScheduleRouter = require('./routes/dateSchedule');
+
 
 
 var app = express();
@@ -121,6 +125,8 @@ app.use('/user', usersRouter);
 app.use('/authentication', authenticationRouter);
 app.use('/event', eventsRouter);
 app.use('/match', matchesRouter);
+app.use('/schedule/event', dateScheduleRouter);
+
 
 
 // catch 404 and forward to error handler
@@ -131,12 +137,17 @@ app.use(function (req, res, next) {
 // error handler
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.locals.message = err;
+ // res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+ res.status(500);
+ res.send(null, { statusCode: 500, body: JSON.stringify(err) });
 
   // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  //res.status(err.status || 500);
+  //res.render('error');
 });
 
-module.exports = app;
+module.exports = app;//for running locally
+module.exports.handler = serverless(app);
+
