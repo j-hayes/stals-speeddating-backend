@@ -66,22 +66,20 @@ function createSchedule(event, users, res) {
     var timeSlots = 100;
 
     users.forEach(user => {
-        // const userId = this.event.users.find(x => x === user.Id);
-        //    if (userId) {
-        user.datesInAgeBothAgeRange = [];
-        user.datesNotInAgeRange = [];
-        user.numberOfDatesInARow = 0;
-        user.dates = new Array(timeSlots);
+        const userId = this.event.users.find(x => x === user.Id);
+        if (userId) {
+            user.datesInAgeBothAgeRange = [];
+            user.datesNotInAgeRange = [];
+            user.numberOfDatesInARow = 0;
+            user.dates = new Array(timeSlots);
 
-        if (user.sex === 'male') {
-            men.push(user);
-        } else {
-            women.push(user);
+            if (user.sex === 'male') {
+                men.push(user);
+            } else {
+                women.push(user);
+            }
         }
-        // usersInEvent.push(user);
-        //  }
     });
-    var matches = []
     women.forEach(woman => {
         men.forEach(man => {
             var ageDifference = Math.abs(woman.age - man.age);
@@ -141,7 +139,8 @@ function createSchedule(event, users, res) {
     }
 
     // todo backfill with dates outside range 
-    
+    // todo save date schedule in database 
+
     var output = "Woman Name, Dates .... \n ";
     women.forEach(woman => {
         output = output + woman.firstName + ' ' + woman.lastName + ',';

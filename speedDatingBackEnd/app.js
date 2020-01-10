@@ -44,7 +44,7 @@ app.use(function (req, res, next) {
     return;
   }
   
-  if (req.url == '/user/login' || (req.url.startsWith('/user') && req.method.toLowerCase() == 'POST'.toLowerCase())) {
+  if (req.url === '/user/login' || (req.url.startsWith('/user') && req.method.toLowerCase() == 'POST'.toLowerCase())) {
     next();
     return
   } else {
@@ -108,7 +108,7 @@ app.use(function (req, res, next) {
             }
             else{
               req.user.isAdmin = false;
-            }
+            }            
             next();//successful login
             return;
           }

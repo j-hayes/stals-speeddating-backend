@@ -165,26 +165,33 @@ router.post('/', function (req, res, next) {
   });
 });
 
+router.get('/isAdmin', function (req, res, next) {
+
+  res.status(200);
+  res.send({
+    "isAdmin": req.user.isAdmin,
+  });
+});
 
 
 router.put('/admin/resetPassword', function (req, res, next) {
 
-  if(!req.user.isAdmin){
+  if (!req.user.isAdmin) {
     res.status(401);
     res.send({
       "message": "must be an admin",
     });
     return;
   }
- var params = {
+  var params = {
     "Password": req.body.newPassword,
     "Permanent": true,
     "Username": req.body.username,
     "UserPoolId": poolData.UserPoolId
- }
+  }
 
   CognitoIdentityServiceProvider.adminSetUserPassword(params, function (err, data) {
-    if(err){
+    if (err) {
       res.status(500);
       res.send({
         "message": "Failed to set user password",
@@ -196,7 +203,7 @@ router.put('/admin/resetPassword', function (req, res, next) {
         "message": "password reset"
       });
     }
-    
+
   });
 });
 
