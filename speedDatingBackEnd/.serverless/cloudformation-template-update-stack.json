@@ -146,7 +146,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/stals-speeddating-backend/prod/1577937024760-2020-01-02T03:50:24.760Z/stals-speeddating-backend.zip"
+          "S3Key": "serverless/stals-speeddating-backend/prod/1577999154782-2020-01-02T21:05:54.782Z/stals-speeddating-backend.zip"
         },
         "FunctionName": "stals-speeddating-backend-prod-app",
         "Handler": "app.handler",
@@ -165,14 +165,14 @@
         "IamRoleLambdaExecution"
       ]
     },
-    "AppLambdaVersionHLqVmgB69KXGTNCwYIQzF2mSoK7F2HkHFjLPUibI0": {
+    "AppLambdaVersionz28SY3bHEUHu9xh20k54WVGGtxjHJBC8dSWWrBszvSg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AppLambdaFunction"
         },
-        "CodeSha256": "SdiXOoQeKcVqsBdDq1/ImY8VqG0i4M42bgiFiNNyIjE="
+        "CodeSha256": "Yk5TrC0coX1BtaZ1Zh63TEQXvUh0/Lb6PKE4fF4K6K8="
       }
     },
     "ApiGatewayRestApi": {
@@ -290,7 +290,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1577937004839": {
+    "ApiGatewayDeployment1577999132991": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -357,7 +357,7 @@
     "AppLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AppLambdaVersionHLqVmgB69KXGTNCwYIQzF2mSoK7F2HkHFjLPUibI0"
+        "Ref": "AppLambdaVersionz28SY3bHEUHu9xh20k54WVGGtxjHJBC8dSWWrBszvSg"
       }
     },
     "ServiceEndpoint": {

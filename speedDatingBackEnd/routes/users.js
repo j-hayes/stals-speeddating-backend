@@ -24,17 +24,27 @@ router.post('/login', function (req, res, next) {
     Username: req.body.username,
     Pool: userPool
   };
+  try {
 
-  var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-  cognitoUser.authenticateUser(authenticationDetails, {
-    onSuccess: function (result) {
-      res.send({ token: `${result.getAccessToken().getJwtToken()}` });
-    },
-    onFailure: function (err) {
-      res.status(401);
-      res.send({ "Message": "Login failed, please try again" });
-    }
-  });
+    var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+    cognitoUser.authenticateUser(authenticationDetails, {
+      onSuccess: function (result) {
+        res.status(200);
+        res.send({ token: `${result.getAccessToken().getJwtToken()}` });
+      },
+      onFailure: function (err) {
+        res.status(401);
+        res.send({ "Message": "Login failed, please try again" });
+      }
+    });
+  }
+  catch (ex) {
+    res.status(500);
+    res.send({
+      "message": "error logging in",
+      "error": ex
+    });
+  }
 });
 
 router.get('/', function (req, res, next) {
@@ -53,7 +63,7 @@ router.get('/', function (req, res, next) {
       });
     } else {
       var users = data.Items;
-
+      res.status(200);
       res.send(users);
     }
   });
@@ -118,7 +128,7 @@ router.post('/', function (req, res, next) {
           res.status(500);
           res.send({
             "message": "Failed to create user in cognito",
-            "error" : err
+            "error": err
           });
         }
         else {
@@ -131,27 +141,65 @@ router.post('/', function (req, res, next) {
           };
           CognitoIdentityServiceProvider.adminConfirmSignUp(params, function (err, data) {
             if (err) {
-              console.log(err, err.stack); // an error occurred
+              res.status(500);
+              res.send({
+                "message": "Failed to confirm user in congnito",
+                "error": err
+              });
+              return;
             }
-
             else {
-              console.log(data);
+              res.status(200);
+              res.send({ "message": "Successfully Created User" });
             }
-            // successful response
           });
-
-          res.send({ "message": "Successfully Created User" });
         }
       });
     } else {
       res.status(500);
       res.send({
         "message": "Failed to create user in dynamo",
-        "error" : err
+        "error": err
       });
     }
   });
 });
+
+
+
+router.put('/admin/resetPassword', function (req, res, next) {
+
+  if(!req.user.isAdmin){
+    res.status(401);
+    res.send({
+      "message": "must be an admin",
+    });
+    return;
+  }
+ var params = {
+    "Password": req.body.newPassword,
+    "Permanent": true,
+    "Username": req.body.username,
+    "UserPoolId": poolData.UserPoolId
+ }
+
+  CognitoIdentityServiceProvider.adminSetUserPassword(params, function (err, data) {
+    if(err){
+      res.status(500);
+      res.send({
+        "message": "Failed to set user password",
+        "error": err
+      });
+    } else {
+      res.status(200);
+      res.send({
+        "message": "password reset"
+      });
+    }
+    
+  });
+});
+
 
 
 
