@@ -37,13 +37,17 @@ app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Headers', '*');
   
   if(req.method.toLowerCase() == 'options'.toLowerCase()){
- 
-
     res.status(200);
     res.send();
     return;
   }
   
+  if(req.url === '/ping'){
+    res.status(200);
+    res.send({"version": "1"});
+    return;
+  }
+
   if (req.url === '/user/login' || (req.url.startsWith('/user') && req.method.toLowerCase() == 'POST'.toLowerCase())) {
     next();
     return

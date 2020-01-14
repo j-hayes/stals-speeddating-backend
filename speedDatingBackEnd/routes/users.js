@@ -21,7 +21,7 @@ router.post('/login', function (req, res, next) {
     Password: req.body.password
   });
   var userData = {
-    Username: req.body.username,
+    Username: req.body.username.toLowerCase(),
     Pool: userPool
   };
   try {
@@ -98,7 +98,7 @@ router.post('/', function (req, res, next) {
         "S": req.body.firstName
       },
       "Id": {
-        "S": req.body.email
+        "S": `${req.body.email}`.toLowerCase()
       },
       "lastName": {
         "S": req.body.lastName

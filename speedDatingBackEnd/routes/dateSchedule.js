@@ -2,6 +2,9 @@ var express = require('express');
 var router = express.Router();
 const eventsTableName = "Events";
 const usersTableName = "Users";
+const datesTableName = "Dates";
+const uuidv1 = require('uuid/v1');
+
 const { json2csv } = require('json2csv');
 
 var _ = require('lodash');
@@ -11,7 +14,7 @@ var AWS = require('aws-sdk');
 AWS.config.update({ region: 'us-east-2' });
 
 
-router.get('/:eventId', function (req, res, next) {
+router.post('/:eventId', function (req, res, next) {
 
     var eventId = req.params.eventId;
     const docClient = new AWS.DynamoDB.DocumentClient();
@@ -19,7 +22,7 @@ router.get('/:eventId', function (req, res, next) {
         TableName: eventsTableName
     };
 
-    docClient.scan(params, function (err, data) {
+    docClient.scan(params, function (err, eventsQueryResult) {
         if (err) {
             res.status(500);
             res.send({
@@ -28,7 +31,7 @@ router.get('/:eventId', function (req, res, next) {
             });
             return;
         }
-        events = data.Items;
+        events = eventsQueryResult.Items;
         event = events.find(x => x.Id === eventId);
         if (!event) {
             res.status(404);
@@ -39,12 +42,10 @@ router.get('/:eventId', function (req, res, next) {
             return;
         }
 
-        const getUsersDocClient = new AWS.DynamoDB.DocumentClient();
         const params = {
             TableName: usersTableName
         };
-
-        docClient.scan(params, function (err, data) {
+        docClient.scan(params, function (err, usersQueryResult) {
             if (err) {
                 res.status(500);
                 res.send({
@@ -53,9 +54,7 @@ router.get('/:eventId', function (req, res, next) {
                 });
                 return;
             }
-            var scheduleCSV = createSchedule(event, data.Items, res);
-            res.status(200).send({ schedule: scheduleCSV });
-
+            createSchedule(event, usersQueryResult.Items, res);           
         });
     });
 });
@@ -137,24 +136,67 @@ function createSchedule(event, users, res) {
             }
         });
     }
-
-    // todo backfill with dates outside range 
     // todo save date schedule in database 
 
-    var output = "Woman Name, Dates .... \n ";
-    women.forEach(woman => {
-        output = output + woman.firstName + ' ' + woman.lastName + ',';
-        for (let i = 0; i < woman.dates.length; i++) {
-            const man = woman.dates[i];
-            if (man) {
-                output = output + man.firstName + ' ' + man.lastName;
+    // todo backfill with dates outside range 
+    for(var woman of women){
+        for (let dateRound = 0; dateRound < woman.dates.length; dateRound++) {
+            const date = woman.dates[dateRound];
+            if(!date){
+                continue;
             }
-            output = output + ','
+            ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
+            var params = {
+                TableName: datesTableName,
+                Item: {
+                    "Id": {
+                        "S": uuidv1()
+                    },
+                    "eventId": {
+                        "S": event.Id
+                    },
+                    "manId": {
+                        "S": date.Id
+                    },
+                    "womanId": {
+                        "S": woman.Id
+                    },
+                    "round": {
+                        "N": `${dateRound}`
+                    }
+                }
+            };
+            ddb.putItem(params, function (err, data) {
+                if(err){
+                    var a = dateRound;
+                }
+                else{
+                    var aa = '';
+                }
+            });
         }
-        output = output + '\n ';
-    });
-    return output;
+    }
+    res.status(200);
+    res.send();
 }
+
+router.get('/:eventId', function (req, res, next) {
+    const docClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: datesTableName
+    };
+
+    docClient.scan(params, function(err, data){
+        if(err){
+
+        }
+        else{
+            res.status(200);
+            res.send(data.Items.filter(x=>x.eventId === req.params.eventId));
+        }
+    });
+
+});
 
 function areInEachOthersDatingRange(woman, man) {
     return man.age >= woman.minDateAge && man.age <= woman.maxDateAge &&

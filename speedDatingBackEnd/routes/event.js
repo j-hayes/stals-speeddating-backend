@@ -51,7 +51,6 @@ router.get('/', function (req, res, next) {
     });
 });
 
-//todo this needs to be updated with the new matching formula. Will work with the "scheduler" algorithm and data model
 router.get('/:id/users', function (req, res, next) {
     var id = req.params.id;
 
@@ -102,7 +101,7 @@ router.get('/:id/users', function (req, res, next) {
                     var minAge = 1;
                     var maxAge = 1000;
 
-                    var sex = currentUser.sex == 'female'?'male':'female';
+                    var sex = currentUser.sex == 'female' ? 'male' : 'female';
 
                     if (currentUser.age < 30) {
                         minAge = 20;
@@ -119,8 +118,6 @@ router.get('/:id/users', function (req, res, next) {
             });
         }
     });
-
-
 });
 
 router.post('/', function (req, res, next) {
@@ -213,8 +210,6 @@ router.put('/open', function (req, res, next) {
             });
         }
     });
-
-
 });
 
 
@@ -289,8 +284,6 @@ router.put('/users', function (req, res, next) {
             });
         }
     });
-
-
 });
 
 
@@ -366,8 +359,7 @@ router.delete('/users', function (req, res, next) {
             });
         }
     });
-
-
 });
+
 
 module.exports = router;

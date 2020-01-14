@@ -60,3 +60,6 @@ typings/
 # next.js build output
 .next
 
+speedDatingBackEnd/.serverless/cloudformation-template-update-stack.json
+speedDatingBackEnd/.serverless/serverless-state.json
+speedDatingBackEnd/.serverless/stals-speeddating-backend.zip
