@@ -84,7 +84,7 @@ router.post('/', function (req, res, next) {
   //   maxDateAge = 39;
   // }
 
-
+  const email = `${req.body.email}`.toLowerCase();
   minDateAge = req.body.minDateAge;
   maxDateAge = req.body.maxDateAge;
 
@@ -98,7 +98,7 @@ router.post('/', function (req, res, next) {
         "S": req.body.firstName
       },
       "Id": {
-        "S": `${req.body.email}`.toLowerCase()
+        "S": email
       },
       "lastName": {
         "S": req.body.lastName
@@ -107,7 +107,7 @@ router.post('/', function (req, res, next) {
         "S": req.body.sex
       },
       "email": {
-        "S": req.body.email
+        "S": email
       },
       "minDateAge": {
         "N": `${minDateAge}`
@@ -122,8 +122,8 @@ router.post('/', function (req, res, next) {
 
 
       var attributeList = [];
-      attributeList.push(new AmazonCognitoIdentity.CognitoUserAttribute({ Name: "email", Value: req.body.email }));
-      userPool.signUp(req.body.email, req.body.password, attributeList, null, function (err, result) {
+      attributeList.push(new AmazonCognitoIdentity.CognitoUserAttribute({ Name: "email", Value: email }));
+      userPool.signUp(email, req.body.password, attributeList, null, function (err, result) {
         if (err) {
           res.status(500);
           res.send({
@@ -136,7 +136,7 @@ router.post('/', function (req, res, next) {
 
           var params = {
             UserPoolId: poolData.UserPoolId, /* required */
-            Username: req.body.email /* required */
+            Username: email /* required */
 
           };
           CognitoIdentityServiceProvider.adminConfirmSignUp(params, function (err, data) {
