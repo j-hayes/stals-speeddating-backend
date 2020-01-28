@@ -149,66 +149,42 @@ router.post('/', function (req, res, next) {
     });
 });
 
+router.put('/:eventId/open', function (req, res, next) {
 
-router.put('/open', function (req, res, next) {
+    const eventId = req.params.eventId;
+    /* This example updates an item in the Music table. It adds a new attribute (Year) and modifies the AlbumTitle attribute.  All of the attributes in the item, as they appear after the update, are returned in the response. */
+    const dynamodb = new AWS.DynamoDB();
 
-    const params = {
-        TableName: eventsTableName,
-        KeyConditionExpression: 'Id = :i',
+    var params = {
+        ExpressionAttributeNames: {
+            "#O": "open",
+        },
         ExpressionAttributeValues: {
-            ':i': req.body.id
-        }
-    };
-
-    const docClient = new AWS.DynamoDB.DocumentClient();
-
-    docClient.query(params, function (err, data) {
-        if (err) {
-            res.send({
-                success: false,
-                message: 'Error: Server error'
-            });
-        }
-        else if (!data || !data.Items) {
-            res.status(404);
-            res.send({
-                success: false,
-                message: 'Error: Event Not Found'
-            });
-        }
-        else {
-            ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
-            var usersList = [];
-            if (data.Items[0].users) {
-                data.Items[0].users.forEach(user => {
-                    usersList.push({ "S": user });
-                });;
+            ":o": {
+                BOOL: true
+            },           
+        },
+        Key: {
+            "Id": {
+                S: eventId
             }
-
-            var params = {
-                TableName: eventsTableName,
-                Item: {
-                    "Id": {
-                        "S": req.body.id
-                    },
-                    "users": {
-                        "L": usersList
-                    },
-                    "open": {
-                        "BOOL": req.body.open
-                    }
-                }
-            };
-            ddb.putItem(params, function (err, data) {
-                if (!err) {
-                    res.send({ "message": "Successfully Update Event" });
-
-                } else {
-                    res.status(500);
-                    res.send({ "message": "Failed to Update Event" });
-                }
+        },
+        ReturnValues: "ALL_NEW",
+        TableName: eventsTableName,
+        UpdateExpression: "SET #O = :o"
+    };
+    dynamodb.updateItem(params, function (err, data) {
+        if (err) {
+            res.status(500);
+            res.send({
+              "message": "Failed to open the event",
+              "error": err
             });
-        }
+          }
+          else {
+            res.status(200);  
+            res.send();
+          }
     });
 });
 

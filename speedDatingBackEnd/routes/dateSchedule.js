@@ -40,28 +40,17 @@ router.put('/:eventId/finalize', function (req, res, next) {
         UpdateExpression: "SET #F = :f"
     };
     dynamodb.updateItem(params, function (err, data) {
-        if (err) console.log(err, err.stack); // an error occurred
-        else console.log(data);           // successful response
-        /*
-        data = {
-         Attributes: {
-          "AlbumTitle": {
-            S: "Louder Than Ever"
-           }, 
-          "Artist": {
-            S: "Acme Band"
-           }, 
-          "SongTitle": {
-            S: "Happy Day"
-           }, 
-          "Year": {
-            N: "2015"
-           }
-         }
-        }
-        */
+        if (err) {
+            res.status(500);
+            res.send({
+              "message": "Failed to finalize the schedule",
+              "error": err
+            });
+          }
+          else {
+            res.status(200);  
+          }
     });
-
 });
 
 router.post('/:eventId', function (req, res, next) {
