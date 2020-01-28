@@ -14,6 +14,56 @@ var AWS = require('aws-sdk');
 AWS.config.update({ region: 'us-east-2' });
 
 
+
+router.put('/:eventId/finalize', function (req, res, next) {
+
+    const eventId = req.params.eventId;
+    /* This example updates an item in the Music table. It adds a new attribute (Year) and modifies the AlbumTitle attribute.  All of the attributes in the item, as they appear after the update, are returned in the response. */
+    const dynamodb = new AWS.DynamoDB();
+
+    var params = {
+        ExpressionAttributeNames: {
+            "#F": "scheduleFinalized",
+        },
+        ExpressionAttributeValues: {
+            ":f": {
+                BOOL: true
+            },           
+        },
+        Key: {
+            "Id": {
+                S: eventId
+            }
+        },
+        ReturnValues: "ALL_NEW",
+        TableName: eventsTableName,
+        UpdateExpression: "SET #F = :f"
+    };
+    dynamodb.updateItem(params, function (err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else console.log(data);           // successful response
+        /*
+        data = {
+         Attributes: {
+          "AlbumTitle": {
+            S: "Louder Than Ever"
+           }, 
+          "Artist": {
+            S: "Acme Band"
+           }, 
+          "SongTitle": {
+            S: "Happy Day"
+           }, 
+          "Year": {
+            N: "2015"
+           }
+         }
+        }
+        */
+    });
+
+});
+
 router.post('/:eventId', function (req, res, next) {
 
     var eventId = req.params.eventId;
@@ -54,7 +104,7 @@ router.post('/:eventId', function (req, res, next) {
                 });
                 return;
             }
-            createSchedule(event, usersQueryResult.Items, res);           
+            createSchedule(event, usersQueryResult.Items, res);
         });
     });
 });
@@ -65,6 +115,7 @@ function createSchedule(event, users, res) {
     var timeSlots = 100;
 
     users.forEach(user => {
+       
         const userId = this.event.users.find(x => x === user.Id);
         if (userId) {
             user.datesInAgeBothAgeRange = [];
@@ -80,6 +131,11 @@ function createSchedule(event, users, res) {
         }
     });
     women.forEach(woman => {
+        if(woman.Id === 'kathyh9986@gmail.com'){
+            let awfa = ';';
+        }
+
+     
         men.forEach(man => {
             var ageDifference = Math.abs(woman.age - man.age);
             var dateForMan = {
@@ -98,19 +154,23 @@ function createSchedule(event, users, res) {
                 man.datesNotInAgeRange.push(dateForMan);
             }
         });
-        _.orderBy(woman.datesInAgeBothAgeRange, "ageDifference", "desc");
-        _.orderBy(woman.datesNotInAgeRange, "ageDifference", "desc");
+        woman.datesInAgeBothAgeRange = _.orderBy(woman.datesInAgeBothAgeRange, "ageDifference", "desc");
+        woman.datesNotInAgeRange = _.orderBy(woman.datesNotInAgeRange, "ageDifference", "desc");
     });
 
     men.forEach(man => {
-        _.orderBy(man.datesInAgeBothAgeRange, "ageDifference", "desc");
-        _.orderBy(man.datesNotInAgeRange, "ageDifference", "desc");
+        man.datesInAgeBothAgeRange = _.orderBy(man.datesInAgeBothAgeRange, "ageDifference", "desc");
+        man.datesNotInAgeRange = _.orderBy(man.datesNotInAgeRange, "ageDifference", "desc");
     });
 
     for (let timeSlot = 0; timeSlot < timeSlots; timeSlot++) {
         women = _.shuffle(women); //makes sure the bias in the algorithm that favors being at the front of the list is randomized
 
         women.forEach(woman => {
+            if(woman.Id === 'kathyh9986@gmail.com'){
+                let awfa = ';';
+            }
+    
             var dateNotFound = true;
             var pairableParticipantsThatAlreadyHaveDates = [];
             while (dateNotFound && woman.datesInAgeBothAgeRange.length > 0) { //peek
@@ -122,9 +182,13 @@ function createSchedule(event, users, res) {
                 if (potentialDate.date.dates[timeSlot]) {
                     pairableParticipantsThatAlreadyHaveDates.push(potentialDate);
                 } else {
+                    if(woman.Id === 'kathyh9986@gmail.com'){
+                        let awfa3 = ';';
+                    }
                     woman.dates[timeSlot] = potentialDate.date;
                     potentialDate.date.dates[timeSlot] = woman;
                     woman.numberOfDatesInARow++;
+                    dateNotFound = false;
                 }
             }
             if (dateNotFound) {
@@ -139,10 +203,10 @@ function createSchedule(event, users, res) {
     // todo save date schedule in database 
 
     // todo backfill with dates outside range 
-    for(var woman of women){
+    for (var woman of women) {
         for (let dateRound = 0; dateRound < woman.dates.length; dateRound++) {
             const date = woman.dates[dateRound];
-            if(!date){
+            if (!date) {
                 continue;
             }
             ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
@@ -167,10 +231,10 @@ function createSchedule(event, users, res) {
                 }
             };
             ddb.putItem(params, function (err, data) {
-                if(err){
+                if (err) {
                     var a = dateRound;
                 }
-                else{
+                else {
                     var aa = '';
                 }
             });
@@ -186,13 +250,13 @@ router.get('/:eventId', function (req, res, next) {
         TableName: datesTableName
     };
 
-    docClient.scan(params, function(err, data){
-        if(err){
+    docClient.scan(params, function (err, data) {
+        if (err) {
 
         }
-        else{
+        else {
             res.status(200);
-            res.send(data.Items.filter(x=>x.eventId === req.params.eventId));
+            res.send(data.Items.filter(x => x.eventId === req.params.eventId));
         }
     });
 
