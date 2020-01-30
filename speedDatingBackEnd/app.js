@@ -16,6 +16,7 @@ var authenticationRouter = require('./routes/authentication');
 var eventsRouter = require('./routes/event');
 var matchesRouter = require('./routes/match');
 var dateScheduleRouter = require('./routes/dateSchedule');
+var datesRouter = require('./routes/dates');
 
 
 
@@ -130,6 +131,8 @@ app.use('/authentication', authenticationRouter);
 app.use('/event', eventsRouter);
 app.use('/match', matchesRouter);
 app.use('/schedule/event', dateScheduleRouter);
+app.use('/dates', datesRouter);
+
 
 
 

@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const uuidv1 = require('uuid/v1');
-const matchTableName = "Matches";
+const datesTableName = "Dates";
 var AWS = require('aws-sdk');
 
 
@@ -12,58 +12,23 @@ router.get('/mine', function (req, res, next) {
 
   const docClient = new AWS.DynamoDB.DocumentClient();
   const params = {
-    TableName: matchTableName,
+    TableName: datesTableName,
     ExpressionAttributeValues: { ":userId": `${userId}` },
-    FilterExpression: "initiatingUserId = :userId or matchUserId =:userId"
+    FilterExpression: "manId = :userId OR womanId = :userId"
 
   };
 
   docClient.scan(params, function (err, data) {
-    if (!err) {
-      res.status(200);
-      res.send(data.Items);
-    } else {
+    if (err) {
       res.status(500);
-      res.send({ "message": "failed to create match" });
-    };
-  });
-});
-  
-
-router.post('/', function (req, res, next) {
-  AWS.config.update({ region: 'us-east-2' });
-
-  ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
-
-  var params = {
-    TableName: matchTableName,
-    Item: {
-      "Id": {
-        "S": uuidv1()
-      },
-      "initiatingUserId": {
-        "S": req.user.id
-      },
-      "matchUserId": {
-        "S": req.body.matchUserId
-      },
-      "eventId": {
-        "S": req.body.eventId
-      },
-      "dateId": {
-        "S": req.body.dateId
-      }
-    }
-  };
-
-
-  ddb.putItem(params, function (err, data) {
-    if (!err) {
-      res.status(200);
-      res.send({ "message": "Successfully created match" });
+      res.send({
+        success: false,
+        message: 'Error: Could not retrieve dates'
+      });
     } else {
-      res.status(500);
-      res.send({ "message": "failed to create match" });
+      var dates = data.Items;
+      res.status(200);
+      res.send(dates);
     }
   });
 });

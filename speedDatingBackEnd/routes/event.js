@@ -152,7 +152,8 @@ router.post('/', function (req, res, next) {
 router.put('/:eventId/open', function (req, res, next) {
 
     const eventId = req.params.eventId;
-    /* This example updates an item in the Music table. It adds a new attribute (Year) and modifies the AlbumTitle attribute.  All of the attributes in the item, as they appear after the update, are returned in the response. */
+    /* This example updates an item in the Music table. It adds a new attribute (Year) and modifies the AlbumTitle attribute. 
+     All of the attributes in the item, as they appear after the update, are returned in the response. */
     const dynamodb = new AWS.DynamoDB();
 
     var params = {
