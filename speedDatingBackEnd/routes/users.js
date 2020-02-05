@@ -73,17 +73,6 @@ router.post('/', function (req, res, next) {
 
   ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
 
-  //for building test data
-  // let minDateAge = Math.round( req.body.age/2 + 9);
-  // let maxDateAge = Math.round(req.body.age*2 - 9);
-
-  // if(minDateAge < 21){
-  //   minDateAge = 21;
-  // }
-  // if(maxDateAge > 39){
-  //   maxDateAge = 39;
-  // }
-
   const email = `${req.body.email}`.toLowerCase();
   minDateAge = req.body.minDateAge;
   maxDateAge = req.body.maxDateAge;

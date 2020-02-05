@@ -50,7 +50,7 @@ router.get('/', function (req, res, next) {
         }
     });
 });
-
+//this could potentially not return all users if we get a large number of users
 router.get('/:id/users', function (req, res, next) {
     var id = req.params.id;
 
