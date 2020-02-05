@@ -15,20 +15,34 @@ router.get('/mine', function (req, res, next) {
     TableName: matchTableName,
     ExpressionAttributeValues: { ":userId": `${userId}` },
     FilterExpression: "initiatingUserId = :userId or matchUserId =:userId"
-
   };
 
+  const exclusiveStartKey = req.query.exclusiveStartKey;
+  if (exclusiveStartKey) {
+    params.ExclusiveStartKey = { Id: exclusiveStartKey };
+  }
+
   docClient.scan(params, function (err, data) {
-    if (!err) {
-      res.status(200);
-      res.send(data.Items);
-    } else {
+    if (err) {
       res.status(500);
-      res.send({ "message": "failed to create match" });
-    };
+      res.send({});
+    }
+    else {
+      res.status(200);
+      let lastEvaludatedKey = '';
+      if (data.LastEvaluatedKey) {
+        lastEvaludatedKey = data.LastEvaluatedKey;
+      }
+      res.send({
+        LastEvaluatedKey: lastEvaludatedKey,
+        matches: data.Items
+      });
+    }
   });
+
+
 });
-  
+
 
 router.post('/', function (req, res, next) {
   AWS.config.update({ region: 'us-east-2' });
