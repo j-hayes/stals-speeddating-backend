@@ -14,6 +14,10 @@ var AWS = require('aws-sdk');
 AWS.config.update({ region: 'us-east-2' });
 
 
+function areInEachOthersDatingRange(woman, man) {
+    return man.age >= woman.minDateAge && man.age <= woman.maxDateAge &&
+        woman.age >= man.minDateAge && woman.age <= man.maxDateAge;
+}
 
 router.put('/:eventId/finalize', function (req, res, next) {
 
@@ -28,7 +32,7 @@ router.put('/:eventId/finalize', function (req, res, next) {
         ExpressionAttributeValues: {
             ":f": {
                 BOOL: true
-            },           
+            },
         },
         Key: {
             "Id": {
@@ -43,13 +47,13 @@ router.put('/:eventId/finalize', function (req, res, next) {
         if (err) {
             res.status(500);
             res.send({
-              "message": "Failed to finalize the schedule",
-              "error": err
+                "message": "Failed to finalize the schedule",
+                "error": err
             });
-          }
-          else {
-            res.status(200);  
-          }
+        }
+        else {
+            res.status(200);
+        }
     });
 });
 
@@ -101,15 +105,17 @@ router.post('/:eventId', function (req, res, next) {
 function createSchedule(event, users, res) {
     var men = [];
     var women = [];
-    var timeSlots = 100;
+    var timeSlots = 40;
+    minNumberOfDates = 40;
 
     users.forEach(user => {
-       
+
         const userId = this.event.users.find(x => x === user.Id);
         if (userId) {
             user.datesInAgeBothAgeRange = [];
             user.datesNotInAgeRange = [];
             user.numberOfDatesInARow = 0;
+            user.numberOfTotalDates = 0;
             user.dates = new Array(timeSlots);
 
             if (user.sex === 'male') {
@@ -120,11 +126,7 @@ function createSchedule(event, users, res) {
         }
     });
     women.forEach(woman => {
-        if(woman.Id === 'kathyh9986@gmail.com'){
-            let awfa = ';';
-        }
 
-     
         men.forEach(man => {
             var ageDifference = Math.abs(woman.age - man.age);
             var dateForMan = {
@@ -153,30 +155,25 @@ function createSchedule(event, users, res) {
     });
 
     for (let timeSlot = 0; timeSlot < timeSlots; timeSlot++) {
-        women = _.shuffle(women); //makes sure the bias in the algorithm that favors being at the front of the list is randomized
+       women = _.shuffle(women); //makes sure the bias in the algorithm that favors being at the front of the list is randomized
 
         women.forEach(woman => {
-            if(woman.Id === 'kathyh9986@gmail.com'){
-                let awfa = ';';
-            }
-    
+            // if (woman.numberOfDatesInARow >= 10)//give the lady a break!
+            // {
+            //     break;
+            // }
             var dateNotFound = true;
             var pairableParticipantsThatAlreadyHaveDates = [];
             while (dateNotFound && woman.datesInAgeBothAgeRange.length > 0) { //peek
-                if (woman.numberOfDatesInARow >= 10)//give the lady a break!
-                {
-                    break;
-                }
                 var potentialDate = woman.datesInAgeBothAgeRange.pop();//take off of queue
                 if (potentialDate.date.dates[timeSlot]) {
                     pairableParticipantsThatAlreadyHaveDates.push(potentialDate);
                 } else {
-                    if(woman.Id === 'kathyh9986@gmail.com'){
-                        let awfa3 = ';';
-                    }
                     woman.dates[timeSlot] = potentialDate.date;
                     potentialDate.date.dates[timeSlot] = woman;
                     woman.numberOfDatesInARow++;
+                    woman.numberOfTotalDates++;
+                    potentialDate.date.numberOfTotalDates++;
                     dateNotFound = false;
                 }
             }
@@ -189,16 +186,50 @@ function createSchedule(event, users, res) {
             }
         });
     }
-    // todo save date schedule in database 
+    // back fill dates with people outside date range
+    for (let timeSlot = 0; timeSlot < timeSlots; timeSlot++) {
 
+        women = _.shuffle(women); //makes sure the bias in the algorithm that favors being at the front of the list is randomized
+
+        women.forEach(woman => {
+            if (woman.dates[timeSlot]) {
+                return;
+            }
+            var dateNotFound = woman.dates[timeSlot] === undefined;
+            var pairableParticipantsThatAlreadyHaveDates = [];
+            while (dateNotFound && woman.datesNotInAgeRange.length > 0) { //peek
+                var potentialDate = woman.datesNotInAgeRange.pop();//take off of queue
+                if (potentialDate.date.dates[timeSlot]) {
+                    pairableParticipantsThatAlreadyHaveDates.push(potentialDate);
+                } else {
+                    woman.dates[timeSlot] = potentialDate.date;
+                    potentialDate.date.dates[timeSlot] = woman;
+                    woman.numberOfDatesInARow++;
+                    woman.numberOfTotalDates++;
+                    potentialDate.date.numberOfTotalDates++;
+                    dateNotFound = false;
+                }
+            }
+            if (dateNotFound) {
+                woman.NumberOfDatesInARow = 0;
+            }
+            while (pairableParticipantsThatAlreadyHaveDates[pairableParticipantsThatAlreadyHaveDates.length - 1])//put the closer in age participants back
+            {
+                woman.datesNotInAgeRange.push(pairableParticipantsThatAlreadyHaveDates.pop());
+            }
+        });
+    }
     // todo backfill with dates outside range 
-    for (var woman of women) {
+    for (let womanIndex = 0; womanIndex < women.length; womanIndex++) {
+        var woman = women[womanIndex];
         for (let dateRound = 0; dateRound < woman.dates.length; dateRound++) {
             const date = woman.dates[dateRound];
             if (!date) {
                 continue;
             }
+            const inAgeRange = areInEachOthersDatingRange(woman, date);
             ddb = new AWS.DynamoDB({ apiVersion: '2012-10-08' });
+
             var params = {
                 TableName: datesTableName,
                 Item: {
@@ -216,15 +247,25 @@ function createSchedule(event, users, res) {
                     },
                     "round": {
                         "N": `${dateRound}`
+                    },
+                    "areInEachOthersDatingRange": {
+                        "BOOL": inAgeRange
+                    },
+                    "tableNumber": {
+                        "N": `${womanIndex}`
                     }
                 }
             };
             ddb.putItem(params, function (err, data) {
                 if (err) {
-                    var a = dateRound;
+                    res.send({
+                        success: false,
+                        message: 'Error: Could not create date',
+                        error: err
+                    });
                 }
                 else {
-                    var aa = '';
+
                 }
             });
         }
@@ -235,25 +276,38 @@ function createSchedule(event, users, res) {
 
 router.get('/:eventId', function (req, res, next) {
     const docClient = new AWS.DynamoDB.DocumentClient();
+    const eventId = req.params.eventId;
+    const exclusiveStartKey = req.query.exclusiveStartKey;
     const params = {
-        TableName: datesTableName
+        TableName: datesTableName,
+        ExpressionAttributeValues: { ":eventId": `${eventId}` },
+        FilterExpression: "eventId = :eventId"
     };
+    if (exclusiveStartKey) {
+
+        params.ExclusiveStartKey = { Id: exclusiveStartKey };
+    }
 
     docClient.scan(params, function (err, data) {
         if (err) {
-
+            res.status(500);
+            res.send({});
         }
         else {
             res.status(200);
-            res.send(data.Items.filter(x => x.eventId === req.params.eventId));
+            let lastEvaludatedKey = '';
+            if (data.LastEvaluatedKey) {
+                lastEvaludatedKey = data.LastEvaluatedKey;
+            }
+            res.send({
+                LastEvaluatedKey: lastEvaludatedKey,
+                dates: data.Items
+            });
         }
     });
 
 });
 
-function areInEachOthersDatingRange(woman, man) {
-    return man.age >= woman.minDateAge && man.age <= woman.maxDateAge &&
-        woman.age >= man.minDateAge && woman.age <= man.maxDateAge;
-}
+
 
 module.exports = router;
