@@ -106,8 +106,8 @@ router.post('/:eventId', function (req, res, next) {
 function createSchedule(event, users, res) {
     var men = [];
     var women = [];
-    var timeSlots = 40;
-    minNumberOfDates = 40;
+    var timeSlots = 25;
+    minNumberOfDates = 20;
 
     users.forEach(user => {
 
