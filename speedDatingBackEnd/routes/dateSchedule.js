@@ -19,6 +19,27 @@ function areInEachOthersDatingRange(woman, man) {
         woman.age >= man.minDateAge && woman.age <= man.maxDateAge;
 }
 
+
+function usersAlreadyMatched(person1, person2) {
+
+    var isMan = false;
+    if (person1.sex === 'male') {
+        isMan = true;
+    }
+    var alreadyMatched = person1.dates.filter(x => x !== undefined && x.Id === person2.Id);
+    if(person2.dates === undefined){
+        var a = 'why';
+    }
+    var alreadyMatchedOther = person2.dates.filter(x => x !== undefined && x.Id === person1.Id);
+
+
+    if(alreadyMatched.length !== alreadyMatchedOther.length){
+        var a = '';
+    }
+
+    return alreadyMatched.length > 0;
+}
+
 router.put('/:eventId/finalize', function (req, res, next) {
 
     const eventId = req.params.eventId;
@@ -106,7 +127,7 @@ router.post('/:eventId', function (req, res, next) {
 function createSchedule(event, users, res) {
     var men = [];
     var women = [];
-    var timeSlots = 25;
+    var timeSlots = 30;
     minNumberOfDates = 20;
 
     users.forEach(user => {
@@ -154,72 +175,96 @@ function createSchedule(event, users, res) {
         man.datesInAgeBothAgeRange = _.orderBy(man.datesInAgeBothAgeRange, "ageDifference", "desc");
         man.datesNotInAgeRange = _.orderBy(man.datesNotInAgeRange, "ageDifference", "desc");
     });
+    users = women.concat(men);
 
     for (let timeSlot = 0; timeSlot < timeSlots; timeSlot++) {
-       women = _.shuffle(women); //makes sure the bias in the algorithm that favors being at the front of the list is randomized
+        users = _.orderBy(users, "numberOfTotalDates", "asc");
 
-        women.forEach(woman => {
-            // if (woman.numberOfDatesInARow >= 10)//give the lady a break!
-            // {
-            //     break;
-            // }
-            var dateNotFound = true;
+        users.forEach(user => {
+
+            var dateNotFound = user.dates[timeSlot] === undefined;
             var pairableParticipantsThatAlreadyHaveDates = [];
-            while (dateNotFound && woman.datesInAgeBothAgeRange.length > 0) { //peek
-                var potentialDate = woman.datesInAgeBothAgeRange.pop();//take off of queue
+            while (dateNotFound && user.datesInAgeBothAgeRange.length > 0) { //peek
+                var potentialDate = user.datesInAgeBothAgeRange.pop();//take off of queue
+
+                const alreadyMatched = usersAlreadyMatched(user, potentialDate.date);
+
+                if (alreadyMatched) {
+                    continue;
+                }
+
                 if (potentialDate.date.dates[timeSlot]) {
                     pairableParticipantsThatAlreadyHaveDates.push(potentialDate);
                 } else {
-                    woman.dates[timeSlot] = potentialDate.date;
-                    potentialDate.date.dates[timeSlot] = woman;
-                    woman.numberOfDatesInARow++;
-                    woman.numberOfTotalDates++;
+                    user.dates[timeSlot] = potentialDate.date;
+                    potentialDate.date.dates[timeSlot] = user;
+                    user.numberOfDatesInARow++;
+                    user.numberOfTotalDates++;
                     potentialDate.date.numberOfTotalDates++;
                     dateNotFound = false;
                 }
             }
             if (dateNotFound) {
-                woman.NumberOfDatesInARow = 0;
+                user.NumberOfDatesInARow = 0;
             }
             while (pairableParticipantsThatAlreadyHaveDates[pairableParticipantsThatAlreadyHaveDates.length - 1])//put the closer in age participants back
             {
-                woman.datesInAgeBothAgeRange.push(pairableParticipantsThatAlreadyHaveDates.pop());
+                user.datesInAgeBothAgeRange.push(pairableParticipantsThatAlreadyHaveDates.pop());
             }
         });
     }
     // back fill dates with people outside date range
     for (let timeSlot = 0; timeSlot < timeSlots; timeSlot++) {
+        users = _.orderBy(users, "numberOfTotalDates", "asc");
 
-        women = _.shuffle(women); //makes sure the bias in the algorithm that favors being at the front of the list is randomized
-
-        women.forEach(woman => {
-            if (woman.dates[timeSlot]) {
-                return;
-            }
-            var dateNotFound = woman.dates[timeSlot] === undefined;
+        users.forEach(user => {
+            var dateNotFound = user.dates[timeSlot] === undefined;
             var pairableParticipantsThatAlreadyHaveDates = [];
-            while (dateNotFound && woman.datesNotInAgeRange.length > 0) { //peek
-                var potentialDate = woman.datesNotInAgeRange.pop();//take off of queue
+            while (dateNotFound && user.datesNotInAgeRange.length > 0) { //peek
+                var potentialDate = user.datesNotInAgeRange.pop();//take off of queue
+                const alreadyMatched = usersAlreadyMatched(user, potentialDate.date);
+
+                if (alreadyMatched) {
+                    continue;
+                }
                 if (potentialDate.date.dates[timeSlot]) {
                     pairableParticipantsThatAlreadyHaveDates.push(potentialDate);
                 } else {
-                    woman.dates[timeSlot] = potentialDate.date;
-                    potentialDate.date.dates[timeSlot] = woman;
-                    woman.numberOfDatesInARow++;
-                    woman.numberOfTotalDates++;
+                    user.dates[timeSlot] = potentialDate.date;
+                    potentialDate.date.dates[timeSlot] = user;
+                    user.numberOfDatesInARow++;
+                    user.numberOfTotalDates++;
                     potentialDate.date.numberOfTotalDates++;
                     dateNotFound = false;
                 }
             }
             if (dateNotFound) {
-                woman.NumberOfDatesInARow = 0;
+                user.NumberOfDatesInARow = 0;
             }
             while (pairableParticipantsThatAlreadyHaveDates[pairableParticipantsThatAlreadyHaveDates.length - 1])//put the closer in age participants back
             {
-                woman.datesNotInAgeRange.push(pairableParticipantsThatAlreadyHaveDates.pop());
+                user.datesNotInAgeRange.push(pairableParticipantsThatAlreadyHaveDates.pop());
             }
         });
     }
+
+    users = _.orderBy(users, "numberOfTotalDates", "asc");
+
+    users.forEach(u => {
+        if (u.sex === 'male') {
+            isMan = true;
+        }
+
+        var realDates = u.dates.filter(x => x);
+
+        var unique = _.uniqBy(realDates, "Id");
+        isUnique = unique.length === realDates.length;
+        if (!isUnique) {
+            var a = realDates.length;
+        }
+        console.log(realDates.length);
+
+    });
     // todo backfill with dates outside range 
     for (let womanIndex = 0; womanIndex < women.length; womanIndex++) {
         var woman = women[womanIndex];
