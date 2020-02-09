@@ -260,7 +260,7 @@ function createSchedule(event, users, res) {
         var unique = _.uniqBy(realDates, "Id");
         isUnique = unique.length === realDates.length;
         if (!isUnique) {
-            var a = realDates.length;
+            throw new {'message': `THERE WAS A DUPLICATE MATCH FOR ${u.Id}`}
         }
         console.log(realDates.length);
 
